@@ -5,7 +5,6 @@
 
     let {session, workspaces} = data;
     $: ({session, workspaces} = data);
-    console.log(workspaces);
     let loading:boolean = false;
     const handleSignOut: SubmitFunction = () => {
 		loading = true

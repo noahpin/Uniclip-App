@@ -10,11 +10,21 @@ export const load = async ({ fetch, data, depends }) => {
     supabaseKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
     event: { fetch },
     serverSession: data.session,
+    options: {
+      realtime: {
+        params: {
+          eventsPerSecond: 2,
+        },
+      },
+    }
   })
 
   const {
     data: { session },
   } = await supabase.auth.getSession()
 
-  return { supabase, session }
+  const sessionRealtimeStateId = crypto.randomUUID()
+
+
+  return { supabase, session, sessionRealtimeStateId }
 }

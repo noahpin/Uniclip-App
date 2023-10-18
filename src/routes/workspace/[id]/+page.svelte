@@ -1,13 +1,13 @@
 <script lang="ts">
-	import Block from "$lib/components/Block.svelte";
+	import BlockWrapper from "$lib/components/BlockWrapper.svelte";
 	import { writable } from "svelte/store";
 
 	export let data;
 
-	let { id, session, workspace, supabase } = data;
-	$: ({ id, session, workspace, supabase } = data);
-	let blocks = writable([]);
-	let tags = writable([]);
+	let { id, session, workspace, supabase, sessionRealtimeStateId } = data;
+	$: ({ id, session, workspace, supabase, sessionRealtimeStateId } = data);
+	let blocks = writable(new Array<Block>());
+	let tags = writable(new Array<Tag>());
 
 	async function fetchData() {
 		const b = await supabase
@@ -22,24 +22,26 @@
 			.eq("workspace_id", workspace.id);
 		//@ts-ignore
 		tags.set(t.data);
-        console.log($tags)
 
 		return null;
 	}
 
 	const handleBlockUpdates = (payload: any) => {
-		console.log("Change received!", payload.new.id, payload.new.content);
+		if (payload.new.realtime_session == sessionRealtimeStateId) return;
 		let temp = $blocks;
-		//@ts-ignore
 		temp[temp.findIndex((block: any) => block.id === payload.new.id)] =
 			payload.new;
 		blocks.set(temp);
-        
 	};
 
 	const handleBlockInserts = (payload: any) => {
-		console.log("New block!", payload.new);
-		//blocks.push(payload.new);
+		console.log("New block!", payload.new.id);
+		blocks.set([...$blocks, payload.new]);
+	};
+
+	const handleBlockDeletes = (payload: any) => {
+		console.log("Block deleted!", payload.old.id);
+		blocks.set($blocks.filter((block: any) => block.id !== payload.old.id));
 	};
 
 	// Listen to inserts
@@ -65,29 +67,59 @@
 			},
 			handleBlockInserts
 		)
+		.on(
+			"postgres_changes",
+			{
+				event: "DELETE",
+				schema: "public",
+				filter: `workspace_id=eq.${workspace.id}`,
+				table: "blocks",
+			},
+			handleBlockDeletes
+		)
 		.subscribe();
 
-	interface Tag {
-		id: string;
-		name: string;
-		color: string;
+	function findTag(id: string | undefined): Tag {
+		let found: Tag = $tags.find((tag: Tag) => tag.id === id) || {
+			id: "",
+			name: "",
+			color: "",
+		};
+		return found;
 	}
-	function findTag(id: string) {
-		if (!id) return { id: "", name: "", color: "" };
-		console.log($tags);
-		return $tags.find((tag: any) => tag.id === id);
+
+	async function handleBlockPositionChanged(e: CustomEvent) {
+		//console.log(e.detail, sessionRealtimeStateId);
+		const { error } = await supabase
+			.from("blocks")
+			.update({
+				position: e.detail.position,
+				realtime_session: sessionRealtimeStateId,
+			})
+			.eq("id", e.detail.id);
+	}
+	async function handleBlockTextUpdate(e: CustomEvent) {
+		const { error } = await supabase
+			.from("blocks")
+			.update({
+				content: e.detail.content,
+				realtime_session: sessionRealtimeStateId,
+			})
+			.eq("id", e.detail.id);
+
 	}
 </script>
 
 {id}
 <div id="main-blocks">
 	{#await fetchData() then data}
-		{#each $blocks as block (block.id)}
-			<Block {block} tag={findTag(block.tag_id)}>
-				{block.content}
-				{block.date_created}
-				{new Date().valueOf()}
-			</Block>
+		{#each $blocks as block (block)}
+			<BlockWrapper
+				on:positionChange={handleBlockPositionChanged}
+				on:updateTextContent={handleBlockTextUpdate}
+				{block}
+				tag={findTag(block.tag_id)}
+			/>
 		{/each}
 	{/await}
 </div>

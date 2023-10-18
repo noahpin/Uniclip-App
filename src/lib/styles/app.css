@@ -33,7 +33,6 @@ button:hover {
 
 }
 .block {
-    padding: 10px 12px;
     border: 4px solid black;
     font-weight: 300;
     background: white;
@@ -44,6 +43,32 @@ button:hover {
     width: 100%;
     box-sizing: border-box;
     height: 100%;
+}
+.block-preview {
+    position: absolute;
+    border: 4px solid rgba(0, 0, 0, 0.319);
+    z-index: -10;
+}
+.block textarea {
+    padding: 11px 12px;
+    font-size: 16px;
+    width: 100%;
+    margin:0;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+    display: block;
+    border: none;
+    resize: none;
+}
+
+.block textarea:focus {
+    outline: none;
+}
+.block img {
+    width:100%; height:100%; object-fit: cover;
+    padding: 4px 4px;
+    box-sizing: border-box;
 }
 
 #main-blocks {
@@ -58,10 +83,12 @@ button:hover {
     position: inherit;
     left:0px; right:0;
     top:0; bottom:0;
+    pointer-events: none;
 }
 /* universal class for all block hits, or elements that have a class that starts with .block-hit-*/
 [class^="block-hit-"] {
     position: absolute;
+    pointer-events: all;
 }
 
 .block-hit-left {
@@ -82,8 +109,11 @@ button:hover {
     top: 0;
     left: var(--blockHitSize);
     width: calc( 100% - var(--blockHitSize) * 2);
-    height: var(--blockHitSize);
-    cursor:n-resize;
+    height: calc(var(--blockHitSize) * 1.5);
+    cursor:grab;
+}
+.block-hit-top:active {
+    cursor:grabbing;
 }
 .block-hit-bottom {
     bottom: 0;
