@@ -6,9 +6,8 @@ export const load: PageServerLoad = async ({ url, locals: { supabase, getSession
   const session = await getSession()
 
   // if the user is already logged in return them to the account page
-  if (session) {
-    throw redirect(303, '/')
-  }
-
-  return { url: url.origin }
+    if (session) {
+        await supabase.auth.signOut()
+        throw redirect(303, '/auth')
+      }
 }
