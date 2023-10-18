@@ -1,6 +1,7 @@
 <script lang="ts">
     import { quintInOut } from "svelte/easing";
 	import { spring } from "svelte/motion";
+    
 	export let block: {
 		id: string;
 		content: string;
@@ -18,8 +19,8 @@
 	};
 	let actualPosition = spring({...block.position}, 
 		{
-			stiffness: 0.1,
-			damping: 0.25
+			stiffness: 0.25,
+			damping: 0.65
 		});
 
 

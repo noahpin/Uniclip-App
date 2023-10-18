@@ -18,6 +18,7 @@ export const load = async ({ locals: { supabase, getSession }, params }) => {
 		throw redirect(303, "../");
         
 	}
+
 	
 
 	return {

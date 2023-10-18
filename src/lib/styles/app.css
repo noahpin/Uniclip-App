@@ -7,7 +7,7 @@ body {
 :root {
     --blockSize: 50px;
     --blockPadding: 10px;
-    --blockHitSize: 4px;
+    --blockHitSize: 6px;
 }
 
 * {
