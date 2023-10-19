@@ -106,10 +106,45 @@
 				realtime_session: sessionRealtimeStateId,
 			})
 			.eq("id", e.detail.id);
+	}
 
+	async function pasteHandler(e: ClipboardEvent) {
+		console.log(e);
+		if (e.clipboardData) {
+			// Check for text data
+			if (e.clipboardData.types.includes("text/plain")) {
+				// Retrieve and handle text data
+				const pastedText = e.clipboardData.getData("text/plain");
+				handleTextPasted(pastedText);
+			}
+
+			// Check for image data
+			if (e.clipboardData.types.includes("Files")) {
+				return
+				// Retrieve and handle image data
+				const pastedFiles = e.clipboardData.files;
+				handleImagesPasted(pastedFiles);
+			}
+		}
+	}
+
+	async function handleTextPasted(text: string) {
+		console.log(text);
+		const { error } = await supabase.from("blocks").insert({
+				workspace_id: workspace.id,
+				user_id: session.user.id,
+				content: text,
+				position: { x: 1, y: 1, w: 1, h: 1 },
+				tag_id: null,
+				block_type: "text",
+			});
+		if (error) {
+			console.log(error);
+		}
 	}
 </script>
 
+<svelte:window on:paste={pasteHandler} />
 {id}
 <div id="main-blocks">
 	{#await fetchData() then data}

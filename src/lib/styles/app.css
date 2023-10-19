@@ -106,10 +106,10 @@ button:hover {
     cursor:e-resize;
 }
 .block-hit-top {
-    top: 0;
+    top: calc(var(--blockHitSize) * -1);
     left: var(--blockHitSize);
     width: calc( 100% - var(--blockHitSize) * 2);
-    height: calc(var(--blockHitSize) * 1.5);
+    height: calc(var(--blockHitSize) * 2.5);
     cursor:grab;
 }
 .block-hit-top:active {
