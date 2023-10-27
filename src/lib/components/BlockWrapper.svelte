@@ -2,10 +2,26 @@
 	import BlockCodeContent from "$lib/components/BlockCodeContent.svelte";
 	import BlockTextContent from "$lib/components/BlockTextContent.svelte";
 	import BlockImageContent from "$lib/components/BlockImageContent.svelte";
+	import BlockLinkContent from "$lib/components/BlockLinkContent.svelte";
 
 	import { createEventDispatcher } from "svelte";
 	import { quintInOut } from "svelte/easing";
 	import { spring } from "svelte/motion";
+
+	let possibleBlockHits: any = {
+		default: {
+			bottom: true,
+			top: true,
+			left: true,
+			right: true,
+		},
+		link: {
+			bottom: false,
+			top: false,
+			left: true,
+			right: true,
+		},
+	};
 
 	export let block: Block = {
 		id: "",
@@ -20,6 +36,9 @@
 		name: "",
 		color: "",
 	};
+
+	let hits =
+		possibleBlockHits[block.block_type] || possibleBlockHits["default"];
 
 	const dispatch = createEventDispatcher();
 
@@ -200,14 +219,17 @@ left: calc(${
 	<div class="block-hits" draggable="false">
 		<!-- svelte-ignore a11y-pointerdown-events-have-key-events -->
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
-		<div
-			on:pointerdown={(e) => {
-				hitHandler(e, "b");
-			}}
-			class="block-hit-bottom"
-		/>
+		{#if hits.bottom}
+			<div
+				on:pointerdown={(e) => {
+					hitHandler(e, "b");
+				}}
+				class="block-hit-bottom"
+			/>
+		{/if}
 		<!-- svelte-ignore a11y-pointerdown-events-have-key-events -->
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
+
 		<div
 			on:pointerdown={(e) => {
 				hitHandler(e, "m");
@@ -216,52 +238,64 @@ left: calc(${
 		/>
 		<!-- svelte-ignore a11y-pointerdown-events-have-key-events -->
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
-		<div
-			on:pointerdown={(e) => {
-				hitHandler(e, "l");
-			}}
-			class="block-hit-left"
-		/>
+		{#if hits.left}
+			<div
+				on:pointerdown={(e) => {
+					hitHandler(e, "l");
+				}}
+				class="block-hit-left"
+			/>
+		{/if}
 		<!-- svelte-ignore a11y-pointerdown-events-have-key-events -->
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
-		<div
-			on:pointerdown={(e) => {
-				hitHandler(e, "r");
-			}}
-			class="block-hit-right"
-		/>
+		{#if hits.right}
+			<div
+				on:pointerdown={(e) => {
+					hitHandler(e, "r");
+				}}
+				class="block-hit-right"
+			/>
+		{/if}
 		<!-- svelte-ignore a11y-pointerdown-events-have-key-events -->
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
-		<div
-			on:pointerdown={(e) => {
-				hitHandler(e, "bl");
-			}}
-			class="block-hit-bottom-left"
-		/>
+		{#if hits.bottom && hits.left}
+			<div
+				on:pointerdown={(e) => {
+					hitHandler(e, "bl");
+				}}
+				class="block-hit-bottom-left"
+			/>
+		{/if}
 		<!-- svelte-ignore a11y-pointerdown-events-have-key-events -->
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
-		<div
-			on:pointerdown={(e) => {
-				hitHandler(e, "tl");
-			}}
-			class="block-hit-top-left"
-		/>
+		{#if hits.top && hits.left}
+			<div
+				on:pointerdown={(e) => {
+					hitHandler(e, "tl");
+				}}
+				class="block-hit-top-left"
+			/>
+		{/if}
 		<!-- svelte-ignore a11y-pointerdown-events-have-key-events -->
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
-		<div
-			on:pointerdown={(e) => {
-				hitHandler(e, "br");
-			}}
-			class="block-hit-bottom-right"
-		/>
+		{#if hits.bottom && hits.right}
+			<div
+				on:pointerdown={(e) => {
+					hitHandler(e, "br");
+				}}
+				class="block-hit-bottom-right"
+			/>
+		{/if}
 		<!-- svelte-ignore a11y-pointerdown-events-have-key-events -->
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
-		<div
-			on:pointerdown={(e) => {
-				hitHandler(e, "tr");
-			}}
-			class="block-hit-top-right"
-		/>
+		{#if hits.top && hits.right}
+			<div
+				on:pointerdown={(e) => {
+					hitHandler(e, "tr");
+				}}
+				class="block-hit-top-right"
+			/>
+		{/if}
 	</div>
 	<div
 		class="block"
@@ -276,6 +310,8 @@ left: calc(${
 			/>
 		{:else if block.block_type == "image"}
 			<BlockImageContent {block} />
+		{:else if block.block_type == "link"}
+			<BlockLinkContent {block} />
 		{:else}{/if}
 	</div>
 </div>

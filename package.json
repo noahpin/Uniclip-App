@@ -27,6 +27,7 @@
 		"@supabase/auth-ui-svelte": "^0.2.6",
 		"@supabase/supabase-js": "^2.38.1",
 		"animejs": "^3.2.1",
+		"node-fetch": "^3.3.2",
 		"url-metadata": "^3.3.0"
 	}
 }

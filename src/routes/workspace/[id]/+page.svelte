@@ -9,6 +9,13 @@
 	let blocks = writable(new Array<Block>());
 	let tags = writable(new Array<Tag>());
 
+	const isValidUrl = (urlString: string) => {
+		try {
+			return Boolean(new URL(urlString));
+		} catch (e) {
+			return false;
+		}
+	};
 	async function fetchData() {
 		const b = await supabase
 			.from("blocks")
@@ -120,7 +127,6 @@
 
 			// Check for image data
 			if (e.clipboardData.types.includes("Files")) {
-				return
 				// Retrieve and handle image data
 				const pastedFiles = e.clipboardData.files;
 				handleImagesPasted(pastedFiles);
@@ -130,7 +136,20 @@
 
 	async function handleTextPasted(text: string) {
 		console.log(text);
-		const { error } = await supabase.from("blocks").insert({
+		if (isValidUrl(text)) {
+			const { error } = await supabase.from("blocks").insert({
+				workspace_id: workspace.id,
+				user_id: session.user.id,
+				content: text,
+				position: { x: 1, y: 1, w: 1, h: 1 },
+				tag_id: null,
+				block_type: "link",
+			});
+			if (error) {
+				console.log(error);
+			}
+		} else {
+			const { error } = await supabase.from("blocks").insert({
 				workspace_id: workspace.id,
 				user_id: session.user.id,
 				content: text,
@@ -138,8 +157,40 @@
 				tag_id: null,
 				block_type: "text",
 			});
-		if (error) {
-			console.log(error);
+			if (error) {
+				console.log(error);
+			}
+		}
+	}
+
+	async function handleImagesPasted(files: FileList) {
+		for (let i = 0; i < files.length; i++) {
+			const file = files[i];
+			if (file.type.startsWith("image/")) {
+				const imgPath = `${session.user.id}/${crypto.randomUUID()}.png`;
+				const { data, error } = await supabase.storage
+					.from("user-images")
+					.upload(imgPath, file, {
+						contentType: "image/png",
+					});
+
+				const { data: publicUrlData } = await supabase.storage
+					.from("user-images")
+					.getPublicUrl(imgPath);
+
+				console.log(publicUrlData.publicUrl);
+
+				if (!error) {
+					const create = await supabase.from("blocks").insert({
+						workspace_id: workspace.id,
+						user_id: session.user.id,
+						content: publicUrlData.publicUrl,
+						position: { x: 1, y: 1, w: 1, h: 1 },
+						tag_id: null,
+						block_type: "image",
+					});
+				}
+			}
 		}
 	}
 </script>
