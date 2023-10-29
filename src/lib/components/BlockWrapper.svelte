@@ -326,7 +326,7 @@ left: calc(${
 			<BlockImageContent {block} />
 		{:else if block.block_type == "link"}
 			<BlockLinkContent {block} />
-		{:else}{/if}
+		{/if}
 	</div>
 </div>
 
