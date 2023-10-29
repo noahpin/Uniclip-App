@@ -4,8 +4,10 @@
 	import BlockImageContent from "$lib/components/BlockImageContent.svelte";
 	import BlockLinkContent from "$lib/components/BlockLinkContent.svelte";
 
+	import { scale } from "svelte/transition";
+
 	import { createEventDispatcher } from "svelte";
-	import { quintInOut } from "svelte/easing";
+	import { backOut, elasticOut } from "svelte/easing";
 	import { spring } from "svelte/motion";
 
 	let possibleBlockHits: any = {
@@ -23,13 +25,8 @@
 		},
 	};
 
-	export let block: Block = {
-		id: "",
-		content: "",
-		position: { x: 0, y: 0, w: 0, h: 0 },
-		tag_id: "",
-		block_type: "text",
-	};
+	export let block: Block
+
 
 	export let tag: Tag = {
 		id: "",
@@ -49,12 +46,14 @@
 			damping: 0.75,
 		}
 	);
+	$: actualPosition.set({ ...block.position })
 
 	let rotate = spring(0, {
 		stiffness: 0.25,
 		damping: 0.75,
 	});
-	let originPercent = 0;
+	let originPercent = 50;
+	let yOrigin = 0.5;
 
 	let stylestring = ``;
 	$: stylestring = `width: calc(${$actualPosition.w} * var(--blockSize) + ${
@@ -73,7 +72,7 @@ left: calc(${
 	} * var(--blockPadding) - (var(--blockPadding)/2) + ${
 		$actualPosition.x - 1
 	} * var(--blockSize));
-	transform-origin: ${originPercent}% 0;
+	transform-origin: ${originPercent}% ${yOrigin * 100}%;
 	transform: rotate(${$rotate}deg);
 `;
 	$: previewStyle = `width: calc(${block.position.w} * var(--blockSize) + ${
@@ -114,6 +113,7 @@ left: calc(${
 			damping: 0.75,
 		}
 	);
+	$: previewPosition.set({ ...block.position })
 	let rotWeight = 0;
 	let blockEl: HTMLElement;
 	let useBlockPreview: boolean = false;
@@ -130,12 +130,14 @@ left: calc(${
 				100;
 
 			rotWeight = (originPercent / 100 - 0.5) * 6;
+			yOrigin = 0;
 			raf();
 			useBlockPreview = true;
 		}
 	}
 	let rafId: number;
 	function raf() {
+		yOrigin = 0;
 		rotate.update((n) => n / 1.4 - rotWeight);
 		rafId = requestAnimationFrame(raf);
 	}
@@ -197,8 +199,12 @@ left: calc(${
 		if (JSON.stringify(block.position) != JSON.stringify(initialPosition)) {
 			dispatch("positionChange", { id: block.id, position: block.position });
 		}
+		initialPosition = block.position;
 		rotate.set(0);
 		useBlockPreview = false;
+		setTimeout(() => {
+			yOrigin = 0.5;
+		}, 300);
 	}
 
 	function increaseHeightFromContent(e: { detail: { height: number } }) {
@@ -215,13 +221,21 @@ left: calc(${
 	on:pointerup|preventDefault={endHandler}
 	on:mouseup|preventDefault={endHandler}
 />
-<div class="block-parent" style={stylestring} bind:this={blockEl}>
+<div
+	transition:scale={{ duration: 250, easing: backOut }}
+	class="block-parent"
+	style={stylestring}
+	bind:this={blockEl}
+	on:touchmove|preventDefault
+	on:pointermove|preventDefault
+>
 	<div class="block-hits" draggable="false">
 		<!-- svelte-ignore a11y-pointerdown-events-have-key-events -->
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		{#if hits.bottom}
 			<div
-				on:pointerdown={(e) => {
+				on:pointermove|preventDefault
+				on:pointerdown|preventDefault={(e) => {
 					hitHandler(e, "b");
 				}}
 				class="block-hit-bottom"
@@ -231,7 +245,7 @@ left: calc(${
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
 
 		<div
-			on:pointerdown={(e) => {
+			on:pointerdown|preventDefault={(e) => {
 				hitHandler(e, "m");
 			}}
 			class="block-hit-top"
@@ -240,7 +254,7 @@ left: calc(${
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		{#if hits.left}
 			<div
-				on:pointerdown={(e) => {
+				on:pointerdown|preventDefault={(e) => {
 					hitHandler(e, "l");
 				}}
 				class="block-hit-left"
@@ -250,7 +264,7 @@ left: calc(${
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		{#if hits.right}
 			<div
-				on:pointerdown={(e) => {
+				on:pointerdown|preventDefault={(e) => {
 					hitHandler(e, "r");
 				}}
 				class="block-hit-right"
@@ -260,7 +274,7 @@ left: calc(${
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		{#if hits.bottom && hits.left}
 			<div
-				on:pointerdown={(e) => {
+				on:pointerdown|preventDefault={(e) => {
 					hitHandler(e, "bl");
 				}}
 				class="block-hit-bottom-left"
@@ -270,7 +284,7 @@ left: calc(${
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		{#if hits.top && hits.left}
 			<div
-				on:pointerdown={(e) => {
+				on:pointerdown|preventDefault={(e) => {
 					hitHandler(e, "tl");
 				}}
 				class="block-hit-top-left"
@@ -280,7 +294,7 @@ left: calc(${
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		{#if hits.bottom && hits.right}
 			<div
-				on:pointerdown={(e) => {
+				on:pointerdown|preventDefault={(e) => {
 					hitHandler(e, "br");
 				}}
 				class="block-hit-bottom-right"
@@ -290,7 +304,7 @@ left: calc(${
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		{#if hits.top && hits.right}
 			<div
-				on:pointerdown={(e) => {
+				on:pointerdown|preventDefault={(e) => {
 					hitHandler(e, "tr");
 				}}
 				class="block-hit-top-right"
@@ -320,7 +334,3 @@ left: calc(${
 	<div class="block-preview" style={previewStyle} />
 {/if}
 
-<style>
-	.block {
-	}
-</style>

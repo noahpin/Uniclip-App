@@ -1,5 +1,6 @@
 declare global {
 	type Block = {
+		[key: string]: string | undefined;
 		id: string;
 		content: string;
 		position: { x: number; y: number; w: number; h: number };

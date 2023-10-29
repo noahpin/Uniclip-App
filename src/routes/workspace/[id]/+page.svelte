@@ -1,5 +1,6 @@
 <script lang="ts">
 	import BlockWrapper from "$lib/components/BlockWrapper.svelte";
+	import { onMount } from "svelte";
 	import { writable } from "svelte/store";
 
 	export let data;
@@ -34,13 +35,23 @@
 	}
 
 	const handleBlockUpdates = (payload: any) => {
+		let differences: any = {};
+		for (const key in payload.new) {
+			if (payload.old[key] !== payload.new[key]) {
+				differences[key] = {
+					old: payload.old[key],
+					new: payload.new[key],
+				};
+			}
+		}
 		if (payload.new.realtime_session == sessionRealtimeStateId) return;
 		let temp = $blocks;
-		temp[temp.findIndex((block: any) => block.id === payload.new.id)] =
-			payload.new;
+		let bIndex = temp.findIndex((block: any) => block.id === payload.new.id);
+		for (const key in differences) {
+			temp[bIndex][key] = differences[key].new;
+		}
 		blocks.set(temp);
 	};
-
 	const handleBlockInserts = (payload: any) => {
 		console.log("New block!", payload.new.id);
 		blocks.set([...$blocks, payload.new]);
@@ -52,39 +63,6 @@
 	};
 
 	// Listen to inserts
-	supabase
-		.channel("blocks")
-		.on(
-			"postgres_changes",
-			{
-				event: "UPDATE",
-				schema: "public",
-				filter: `workspace_id=eq.${workspace.id}`,
-				table: "blocks",
-			},
-			handleBlockUpdates
-		)
-		.on(
-			"postgres_changes",
-			{
-				event: "INSERT",
-				schema: "public",
-				filter: `workspace_id=eq.${workspace.id}`,
-				table: "blocks",
-			},
-			handleBlockInserts
-		)
-		.on(
-			"postgres_changes",
-			{
-				event: "DELETE",
-				schema: "public",
-				filter: `workspace_id=eq.${workspace.id}`,
-				table: "blocks",
-			},
-			handleBlockDeletes
-		)
-		.subscribe();
 
 	function findTag(id: string | undefined): Tag {
 		let found: Tag = $tags.find((tag: Tag) => tag.id === id) || {
@@ -193,19 +171,53 @@
 			}
 		}
 	}
+	onMount(() => {
+		supabase
+			.channel("blocks")
+			.on(
+				"postgres_changes",
+				{
+					event: "UPDATE",
+					schema: "public",
+					filter: `workspace_id=eq.${workspace.id}`,
+					table: "blocks",
+				},
+				handleBlockUpdates
+			)
+			.on(
+				"postgres_changes",
+				{
+					event: "INSERT",
+					schema: "public",
+					filter: `workspace_id=eq.${workspace.id}`,
+					table: "blocks",
+				},
+				handleBlockInserts
+			)
+			.on(
+				"postgres_changes",
+				{
+					event: "DELETE",
+					schema: "public",
+					filter: `workspace_id=eq.${workspace.id}`,
+					table: "blocks",
+				},
+				handleBlockDeletes
+			)
+			.subscribe();
+		fetchData();
+	});
 </script>
 
 <svelte:window on:paste={pasteHandler} />
 {id}
 <div id="main-blocks">
-	{#await fetchData() then data}
-		{#each $blocks as block (block)}
-			<BlockWrapper
-				on:positionChange={handleBlockPositionChanged}
-				on:updateTextContent={handleBlockTextUpdate}
-				{block}
-				tag={findTag(block.tag_id)}
-			/>
-		{/each}
-	{/await}
+	{#each $blocks as block (block.id)}
+		<BlockWrapper
+			on:positionChange={handleBlockPositionChanged}
+			on:updateTextContent={handleBlockTextUpdate}
+			{block}
+			tag={findTag(block.tag_id)}
+		/>
+	{/each}
 </div>

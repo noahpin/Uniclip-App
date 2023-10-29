@@ -23,5 +23,6 @@
 <svelte:head>
 	<title>APP NAME</title>
 </svelte:head>
-
-<slot />
+<main>
+	<slot />
+</main>
