@@ -113,7 +113,6 @@ left: calc(${
 			damping: 0.75,
 		}
 	);
-	$: previewPosition.set({ ...block.position })
 	let rotWeight = 0;
 	let blockEl: HTMLElement;
 	let useBlockPreview: boolean = false;
