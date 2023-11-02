@@ -22,12 +22,21 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@codemirror/lang-javascript": "^6.2.1",
+		"@codemirror/theme-one-dark": "^6.1.2",
+		"@novacbn/svelte-codejar": "^0.1.2",
 		"@supabase/auth-helpers-sveltekit": "^0.10.3",
 		"@supabase/auth-ui-shared": "^0.1.7",
 		"@supabase/auth-ui-svelte": "^0.2.6",
 		"@supabase/supabase-js": "^2.38.1",
+		"ace-builds": "^1.31.1",
 		"animejs": "^3.2.1",
+		"codemirror": "^6.0.1",
+		"highlight.js": "^11.9.0",
+		"lang-detector": "^1.0.6",
 		"node-fetch": "^3.3.2",
+		"program-language-detector": "^0.0.12",
+		"svelte-codemirror-editor": "^1.1.0",
 		"url-metadata": "^3.3.0"
 	}
 }

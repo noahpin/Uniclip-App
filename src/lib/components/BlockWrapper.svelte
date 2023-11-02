@@ -25,8 +25,7 @@
 		},
 	};
 
-	export let block: Block
-
+	export let block: Block;
 
 	export let tag: Tag = {
 		id: "",
@@ -46,7 +45,7 @@
 			damping: 0.75,
 		}
 	);
-	$: actualPosition.set({ ...block.position })
+	$: actualPosition.set({ ...block.position });
 
 	let rotate = spring(0, {
 		stiffness: 0.25,
@@ -325,6 +324,8 @@ left: calc(${
 			<BlockImageContent {block} />
 		{:else if block.block_type == "link"}
 			<BlockLinkContent {block} />
+		{:else if block.block_type == "code"}
+			<BlockCodeContent {block} />
 		{/if}
 	</div>
 </div>
@@ -332,4 +333,3 @@ left: calc(${
 {#if useBlockPreview}
 	<div class="block-preview" style={previewStyle} />
 {/if}
-

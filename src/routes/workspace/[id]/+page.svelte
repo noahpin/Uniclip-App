@@ -2,6 +2,8 @@
 	import BlockWrapper from "$lib/components/BlockWrapper.svelte";
 	import { onMount } from "svelte";
 	import { writable } from "svelte/store";
+	import hljs from "highlight.js/lib/common";
+	import { detect } from "program-language-detector";
 
 	export let data;
 
@@ -32,6 +34,40 @@
 		tags.set(t.data);
 
 		return null;
+	}
+
+	function isCodeOrText(input: string): boolean {
+		// Define a list of common code-related keywords and their minimum length
+		const keywords: Record<string, number> = {
+			function: 5,
+			if: 2,
+			for: 3,
+			while: 5,
+			return: 6,
+			var: 3,
+			let: 3,
+			const: 5,
+			class: 5,
+		};
+
+		// Check if the input contains any of the keywords with a minimum length requirement
+		for (const keyword in keywords) {
+			if (input.includes(keyword) && input.length > keywords[keyword]) {
+				return true;
+			}
+		}
+
+		// Check for common code-related symbols and operators
+		if (/[\{\}\[\]\(\);=+\-*\/%<>!&\|]/.test(input)) {
+			return true;
+		}
+
+		// Check for comments (e.g., // or /* */)
+		if (/\b\/\/|\/\*|\*\/\b/.test(input)) {
+			return true;
+		}
+
+		return false;
 	}
 
 	const handleBlockUpdates = (payload: any) => {
@@ -113,7 +149,6 @@
 	}
 
 	async function handleTextPasted(text: string) {
-		console.log(text);
 		if (isValidUrl(text)) {
 			const { error } = await supabase.from("blocks").insert({
 				workspace_id: workspace.id,
@@ -122,6 +157,18 @@
 				position: { x: 1, y: 1, w: 1, h: 1 },
 				tag_id: null,
 				block_type: "link",
+			});
+			if (error) {
+				console.log(error);
+			}
+		} else if (detect(text) != "Unknown") {
+			const { error } = await supabase.from("blocks").insert({
+				workspace_id: workspace.id,
+				user_id: session.user.id,
+				content: text,
+				position: { x: 1, y: 1, w: 1, h: 1 },
+				tag_id: null,
+				block_type: "code",
 			});
 			if (error) {
 				console.log(error);
