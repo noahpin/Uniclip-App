@@ -1,9 +1,12 @@
 <script lang="ts">
 	import BlockWrapper from "$lib/components/BlockWrapper.svelte";
 	import { onMount } from "svelte";
+	import { spring } from "svelte/motion";
+
 	import { writable } from "svelte/store";
 	import hljs from "highlight.js/lib/common";
 	import { detect } from "program-language-detector";
+	import BlockCreator from "$lib/components/BlockCreator.svelte";
 
 	export let data;
 
@@ -11,6 +14,11 @@
 	$: ({ id, session, workspace, supabase, sessionRealtimeStateId } = data);
 	let blocks = writable(new Array<Block>());
 	let tags = writable(new Array<Tag>());
+
+	let innerHeight: number;
+	let innerWidth: number;
+	let devicePixelRatio: number;
+	let blockSize = 66;
 
 	const isValidUrl = (urlString: string) => {
 		try {
@@ -147,6 +155,21 @@
 			}
 		}
 	}
+	async function createBlock(e: CustomEvent) {
+		if (e.detail) {
+			const { error } = await supabase.from("blocks").insert({
+				workspace_id: workspace.id,
+				user_id: session.user.id,
+				content: "",
+				position: e.detail.position,
+				tag_id: null,
+				block_type: "text",
+			});
+			if (error) {
+				console.log(error);
+			}
+		}
+	}
 
 	async function handleTextPasted(text: string) {
 		if (isValidUrl(text)) {
@@ -218,6 +241,29 @@
 			}
 		}
 	}
+	let workspaceBounds: any = spring(
+		{
+			widthMinimum: 0,
+			heightMinimum: 0,
+		},
+		{
+			stiffness: 0.25,
+			damping: 0.75,
+		}
+	);
+	let scrollX = 0; let scrollY = 0;
+
+	function handleWheel(e: WheelEvent) {
+		scrollX += e.deltaX;
+		scrollY += e.deltaY;
+	}
+	let boundsStyleString: string = "";
+	$: boundsStyleString = `
+		min-width: ${$workspaceBounds.widthMinimum}px;
+		min-height: ${$workspaceBounds.heightMinimum}px;
+		background-position: ${scrollX * -1}px ${
+			scrollY * -1
+		}px;`;
 	onMount(() => {
 		supabase
 			.channel("blocks")
@@ -254,17 +300,32 @@
 			.subscribe();
 		fetchData();
 	});
+	function dummy() {
+		return null;
+	}
 </script>
 
-<svelte:window on:paste={pasteHandler} />
+<svelte:window
+	on:paste={pasteHandler}
+	on:wheel={handleWheel}
+	bind:innerHeight
+	bind:innerWidth
+	bind:devicePixelRatio
+/>
 {id}
-<div id="main-blocks">
-	{#each $blocks as block (block.id)}
-		<BlockWrapper
-			on:positionChange={handleBlockPositionChanged}
-			on:updateTextContent={handleBlockTextUpdate}
-			{block}
-			tag={findTag(block.tag_id)}
-		/>
-	{/each}
+<div id="block-wrapper">
+	<div id="main-blocks" style={boundsStyleString}>
+		{#each $blocks as block (block.id)}
+			<BlockWrapper
+				on:positionChange={handleBlockPositionChanged}
+				on:updateTextContent={handleBlockTextUpdate}
+				{block}
+				{scrollX}
+				{scrollY}
+				tag={findTag(block.tag_id)}
+			/>
+		{/each}
+	</div>
 </div>
+
+<BlockCreator on:createBlock={createBlock} {scrollX} {scrollY}></BlockCreator>

@@ -5,6 +5,7 @@ body, html {
     overflow: hidden;
     width: 100vw;
     height: 100vh;
+    overscroll-behavior-x: none;
 }
 
 main {
@@ -39,7 +40,6 @@ button:hover {
 .block-parent {
     position: absolute;
     box-sizing: border-box;
-
 }
 .block {
     border: 4px solid black;
@@ -55,8 +55,20 @@ button:hover {
 }
 .block-preview {
     position: absolute;
-    border: 4px solid rgba(0, 0, 0, 0.319);
+    background:  repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        blue 10px,
+        blue 20px
+      );
     z-index: -10;
+}
+.block-cursor-box {
+    position: absolute;
+    background:  #91daff;
+    z-index: -10;
+
 }
 .block textarea {
     padding: 11px 12px;
@@ -79,9 +91,14 @@ button:hover {
     padding: 4px 4px;
     box-sizing: border-box;
 }
-
+#block-wrapper {
+    position: absolute;
+    top:0; left: 0;
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+}
 #main-blocks {
-    position:absolute;
+    position:relative;
     top: 0; left: 0;
     width: 100vw;
     height: 100vh;

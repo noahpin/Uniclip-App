@@ -10,6 +10,9 @@
             content: element.value,
         });
 	}
+	function init(el: any) {
+		el.focus();
+	}
 </script>
 
-<textarea bind:this={element} contenteditable="true" on:input={handleKeyPress}>{block.content}</textarea>
+<textarea bind:this={element} contenteditable="true" on:input={handleKeyPress} placeholder="..." use:init>{block.content}</textarea>

@@ -26,6 +26,8 @@
 	};
 
 	export let block: Block;
+	export let scrollX = 0;
+	export let scrollY = 0;
 
 	export let tag: Tag = {
 		id: "",
@@ -65,12 +67,12 @@ top: calc(${
 		$actualPosition.y
 	} * var(--blockPadding) -  (var(--blockPadding)/2) + ${
 		$actualPosition.y - 1
-	} * var(--blockSize));
+	} * var(--blockSize) - ${scrollY}px);
 left: calc(${
 		$actualPosition.x
 	} * var(--blockPadding) - (var(--blockPadding)/2) + ${
 		$actualPosition.x - 1
-	} * var(--blockSize));
+	} * var(--blockSize) - ${scrollX}px);
 	transform-origin: ${originPercent}% ${yOrigin * 100}%;
 	transform: rotate(${$rotate}deg);
 `;
@@ -84,12 +86,12 @@ top: calc(${
 		$previewPosition.y
 	} * var(--blockPadding) -  (var(--blockPadding)/2) + ${
 		$previewPosition.y - 1
-	} * var(--blockSize));
+	} * var(--blockSize) - ${scrollY}px);
 left: calc(${
 		$previewPosition.x
 	} * var(--blockPadding) - (var(--blockPadding)/2) + ${
 		$previewPosition.x - 1
-	} * var(--blockSize));
+	} * var(--blockSize) - ${scrollX}px);
 `;
 	let moving: string = "";
 	let pX: number = 0;
@@ -215,17 +217,17 @@ left: calc(${
 </script>
 
 <svelte:window
-	on:pointermove|preventDefault={moveHandler}
+	on:pointermove={moveHandler}
 	on:pointerup|preventDefault={endHandler}
 	on:mouseup|preventDefault={endHandler}
 />
 <div
-	transition:scale={{ duration: 250, easing: backOut }}
+	transition:scale={{ duration: 250, easing: backOut}}
 	class="block-parent"
 	style={stylestring}
 	bind:this={blockEl}
-	on:touchmove|preventDefault
-	on:pointermove|preventDefault
+	on:touchmove
+	on:pointermove
 >
 	<div class="block-hits" draggable="false">
 		<!-- svelte-ignore a11y-pointerdown-events-have-key-events -->

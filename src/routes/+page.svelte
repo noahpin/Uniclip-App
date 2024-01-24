@@ -30,7 +30,7 @@
 		}
 	}
 </script>
-
+<!--
 <div class="form-widget">
 	<form
 		class="form-widget"
@@ -69,4 +69,4 @@
 			<button class="button block" disabled={loading}>Sign Out</button>
 		</div>
 	</form>
-</div>
+</div>-->
