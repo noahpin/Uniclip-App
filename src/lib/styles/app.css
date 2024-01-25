@@ -17,7 +17,7 @@ main {
 :root {
     --blockSize: 50px;
     --blockPadding: 10px;
-    --blockHitSize: 6px;
+    --blockHitSize: 12px;
 }
 
 * {
@@ -45,13 +45,40 @@ button:hover {
     border: 4px solid black;
     font-weight: 300;
     background: white;
-    box-shadow: 5px 5px 0 black;
     top: 0;
     left: 0;
     overflow: hidden;
     width: 100%;
     box-sizing: border-box;
     height: 100%;
+}
+.block-action-bounding {
+    position: absolute;
+    overflow: visible;
+}
+.block-action-bar {
+    position: absolute;
+    border: 4px solid black;
+    font-weight: 300;
+    background: white;
+    left: 50%;
+    transform: translateX(-50%);
+    overflow: hidden;
+    text-wrap: nowrap;
+    width: fit-content !important;
+    min-width: fit-content !important;
+    height: fit-content;
+    box-sizing: border-box;
+    padding: 10px;
+}
+.block-action-bar-top {
+    top:-55px;
+}
+.block-action-bar-bottom {
+    bottom:-60px;
+}
+.block.selected {
+    border: 4px solid blue;
 }
 .block-preview {
     position: absolute;
@@ -64,7 +91,7 @@ button:hover {
       );
     z-index: -10;
 }
-.block-cursor-box {
+.block-creator-cursor-box {
     position: absolute;
     background:  #91daff;
     z-index: -10;
@@ -133,10 +160,10 @@ button:hover {
     cursor:e-resize;
 }
 .block-hit-top {
-    top: calc(var(--blockHitSize) * -1);
+    top: calc(var(--blockHitSize) * -0.9);
     left: var(--blockHitSize);
     width: calc( 100% - var(--blockHitSize) * 2);
-    height: calc(var(--blockHitSize) * 2.5);
+    height: calc(var(--blockHitSize) * 1.8);
     cursor:grab;
 }
 .block-hit-top:active {

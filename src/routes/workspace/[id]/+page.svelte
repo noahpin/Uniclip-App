@@ -32,14 +32,14 @@
 			.from("blocks")
 			.select()
 			.eq("workspace_id", workspace.id);
-		//@ts-ignore
-		blocks.set(b.data);
 		const t = await supabase
 			.from("tags")
 			.select()
 			.eq("workspace_id", workspace.id);
 		//@ts-ignore
 		tags.set(t.data);
+		//@ts-ignore
+		blocks.set(b.data);
 
 		return null;
 	}
@@ -109,11 +109,18 @@
 	// Listen to inserts
 
 	function findTag(id: string | undefined): Tag {
+		if(!id) return {
+			id: "",
+			name: "",
+			color: "",
+		};
+		console.log(id)
 		let found: Tag = $tags.find((tag: Tag) => tag.id === id) || {
 			id: "",
 			name: "",
 			color: "",
 		};
+		console.log(found, $tags)
 		return found;
 	}
 

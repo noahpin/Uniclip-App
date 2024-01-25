@@ -4,7 +4,7 @@
 	import BlockImageContent from "$lib/components/BlockImageContent.svelte";
 	import BlockLinkContent from "$lib/components/BlockLinkContent.svelte";
 
-	import { scale } from "svelte/transition";
+	import { scale, slide } from "svelte/transition";
 
 	import { createEventDispatcher } from "svelte";
 	import { backOut, elasticOut } from "svelte/easing";
@@ -34,6 +34,7 @@
 		name: "",
 		color: "",
 	};
+	$: console.log(tag.color, tag.name);
 
 	let hits =
 		possibleBlockHits[block.block_type] || possibleBlockHits["default"];
@@ -57,6 +58,7 @@
 	let yOrigin = 0.5;
 
 	let stylestring = ``;
+	let actionBoundingString = ``;
 	$: stylestring = `width: calc(${$actualPosition.w} * var(--blockSize) + ${
 		$actualPosition.w - 1
 	} * var(--blockPadding)); 
@@ -75,6 +77,23 @@ left: calc(${
 	} * var(--blockSize) - ${scrollX}px);
 	transform-origin: ${originPercent}% ${yOrigin * 100}%;
 	transform: rotate(${$rotate}deg);
+`;
+	$: actionBoundingString = `width: calc(${
+		$actualPosition.w
+	} * var(--blockSize) + ${$actualPosition.w - 1} * var(--blockPadding)); 
+height: calc(${$actualPosition.h} * var(--blockSize) + ${
+		$actualPosition.h - 1
+	} * var(--blockPadding));
+top: calc(${
+		$actualPosition.y
+	} * var(--blockPadding) -  (var(--blockPadding)/2) + ${
+		$actualPosition.y - 1
+	} * var(--blockSize) - ${scrollY}px);
+left: calc(${
+		$actualPosition.x
+	} * var(--blockPadding) - (var(--blockPadding)/2) + ${
+		$actualPosition.x - 1
+	} * var(--blockSize) - ${scrollX}px);
 `;
 	$: previewStyle = `width: calc(${block.position.w} * var(--blockSize) + ${
 		block.position.w - 1
@@ -117,6 +136,8 @@ left: calc(${
 	let rotWeight = 0;
 	let blockEl: HTMLElement;
 	let useBlockPreview: boolean = false;
+	let userClickedTopBar: boolean = false;
+	let blockSelected: boolean = false;
 	function hitHandler(e: PointerEvent, side: any) {
 		moving = side;
 		pX = e.clientX;
@@ -124,15 +145,7 @@ left: calc(${
 		initialPosition = { ...block.position };
 
 		if (moving == "m") {
-			originPercent =
-				((e.clientX - blockEl.getBoundingClientRect().x) /
-					blockEl.getBoundingClientRect().width) *
-				100;
-
-			rotWeight = (originPercent / 100 - 0.5) * 6;
-			yOrigin = 0;
-			raf();
-			useBlockPreview = true;
+			userClickedTopBar = true;
 		}
 	}
 	let rafId: number;
@@ -143,6 +156,18 @@ left: calc(${
 	}
 	function moveHandler(e: PointerEvent) {
 		if (moving == "") return;
+		if (userClickedTopBar) {
+			originPercent =
+				((e.clientX - blockEl.getBoundingClientRect().x) /
+					blockEl.getBoundingClientRect().width) *
+				100;
+
+			rotWeight = (originPercent / 100 - 0.5) * 6;
+			yOrigin = 0;
+			raf();
+			useBlockPreview = true;
+			userClickedTopBar = false;
+		}
 		if (moving.includes("m")) {
 			rotate.update((n) => n + e.movementX * 0.1);
 			block.position.x = initialPosition.x - (pX - e.clientX) / 60;
@@ -190,17 +215,24 @@ left: calc(${
 			});
 		}
 	}
-	function endHandler() {
+	function endHandler(e: PointerEvent | MouseEvent) {
 		cancelAnimationFrame(rafId);
 		moving = "";
+		blockSelected = false;
+
 		block.position.x = Math.round(block.position.x);
 		block.position.y = Math.round(block.position.y);
 		actualPosition.set({ ...block.position });
 		if (JSON.stringify(block.position) != JSON.stringify(initialPosition)) {
 			dispatch("positionChange", { id: block.id, position: block.position });
 		}
-		initialPosition = block.position;
 		rotate.set(0);
+		if (userClickedTopBar) {
+			userClickedTopBar = false;
+			blockSelected = true;
+			rotate.set(1);
+		}
+		initialPosition = block.position;
 		useBlockPreview = false;
 		setTimeout(() => {
 			yOrigin = 0.5;
@@ -221,8 +253,16 @@ left: calc(${
 	on:pointerup|preventDefault={endHandler}
 	on:mouseup|preventDefault={endHandler}
 />
+<div class="block-action-bounding" style={actionBoundingString}>
+	{#if blockSelected}
+		<div transition:scale={{ duration: 250, easing: backOut }} class="block-action-bar block-action-bar-top">action bar :)</div>
+		<div transition:scale={{ duration: 250, easing: backOut, delay: 50 }} class="block-action-bar block-action-bar-bottom">
+			action bar bottom :)
+		</div>
+	{/if}
+</div>
 <div
-	transition:scale={{ duration: 250, easing: backOut}}
+	transition:scale={{ duration: 250, easing: backOut }}
 	class="block-parent"
 	style={stylestring}
 	bind:this={blockEl}
@@ -312,7 +352,7 @@ left: calc(${
 		{/if}
 	</div>
 	<div
-		class="block"
+		class={`block ${blockSelected ? "selected" : ""}`}
 		draggable="false"
 		style={`box-shadow: 5px 5px 0px ${tag.color}`}
 	>

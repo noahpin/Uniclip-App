@@ -160,4 +160,4 @@ left: calc(${
 	on:mouseup|preventDefault={endHandler}
 />
 
-<div class="block-cursor-box" style={previewStyle} />
+<div class="block-creator-cursor-box" style={previewStyle} />
