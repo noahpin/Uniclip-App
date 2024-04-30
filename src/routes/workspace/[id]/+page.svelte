@@ -8,6 +8,8 @@
 	import { detect } from "program-language-detector";
 	import BlockCreator from "$lib/components/BlockCreator.svelte";
 
+	import { boardZoom } from "$lib/stores";
+
 	export let data;
 
 	let { id, session, workspace, supabase, sessionRealtimeStateId } = data;
@@ -109,18 +111,19 @@
 	// Listen to inserts
 
 	function findTag(id: string | undefined): Tag {
-		if(!id) return {
-			id: "",
-			name: "",
-			color: "",
-		};
-		console.log(id)
+		if (!id)
+			return {
+				id: "",
+				name: "",
+				color: "",
+			};
+		console.log(id);
 		let found: Tag = $tags.find((tag: Tag) => tag.id === id) || {
 			id: "",
 			name: "",
 			color: "",
 		};
-		console.log(found, $tags)
+		console.log(found, $tags);
 		return found;
 	}
 
@@ -258,19 +261,95 @@
 			damping: 0.75,
 		}
 	);
-	let scrollX = 0; let scrollY = 0;
-
+	let scrollX = 0;
+	let scrollY = 0;
+	let zoom = 0.5;
+	boardZoom.set(zoom);
+	let wheel = false;
 	function handleWheel(e: WheelEvent) {
-		scrollX += e.deltaX;
-		scrollY += e.deltaY;
+		e.preventDefault();
+		if (e.ctrlKey) {
+			let zoomDelta = e.deltaY / 500;
+			zoom -= zoomDelta;
+			if (zoom < 0.1) zoom = 0.1;
+			if (zoom > 1) zoom = 1;
+			scrollX += e.deltaX * zoomDelta;
+			scrollY += e.deltaY * zoomDelta;
+
+			boardZoom.set(zoom);
+		} else {
+			scrollX += e.deltaX / zoom;
+			scrollY += e.deltaY / zoom;
+		}
+	}
+	function zoomTranslatePercent(zoom: number): number {
+		let a: number = 109811.442;
+		let b: number = -109811.442;
+		let c: number = 2196.22885;
+		let d: number = -0.000000203684499;
+		return (a * zoom + b) / (c * zoom + d);
+	}
+	let mousePanning = false;
+	function handleMouseDown(e: MouseEvent) {
+		"";
+		if (e.button === 1) {
+			mousePanning = true;
+			mVecX = 0;
+			mVecY = 0;
+			prevMouseX = e.clientX;
+			prevMouseY = e.clientY;
+		}
+	}
+	let prevMouseX = 0;
+	let prevMouseY = 0;
+	let mVecX = 0;
+	let mVecY = 0;
+	function handleMouseMove(e: MouseEvent) {
+		if (mousePanning) {
+			let deltaX = e.clientX - prevMouseX;
+			let deltaY = e.clientY - prevMouseY;
+			deltaX /= zoom;
+			deltaY /= zoom;
+			scrollX -= deltaX;
+			scrollY -= deltaY;
+			//calculate motion vector for if the mouse cancels right now
+			mVecX = deltaX;
+			mVecY = deltaY;
+			prevMouseX = e.clientX;
+			prevMouseY = e.clientY;
+		}
+	}
+	function handleMouseUp(e: MouseEvent) {
+		mousePanning = false;
+		if (mVecX > 5 || mVecY > 5) requestAnimationFrame(mouseVelocityAnimation);
+	}
+	function lerp(a: number, b: number, t: number) {
+		return a + (b - a) * t;
+	}
+	function mouseVelocityAnimation() {
+		if (!mousePanning && (mVecX != 0 || mVecY != 0)) {
+			scrollX -= mVecX;
+			scrollY -= mVecY;
+			let friction = 0.98;
+			mVecX *= friction;
+			mVecY *= friction;
+			if (Math.abs(mVecX) < 1 && Math.abs(mVecY) < 1) {
+				mVecX = 0;
+				mVecY = 0;
+			}
+		}
+		requestAnimationFrame(mouseVelocityAnimation);
 	}
 	let boundsStyleString: string = "";
-	$: boundsStyleString = `
-		min-width: ${$workspaceBounds.widthMinimum}px;
-		min-height: ${$workspaceBounds.heightMinimum}px;
-		background-position: ${scrollX * -1}px ${
-			scrollY * -1
-		}px;`;
+	$: boundsStyleString = `background-position: ${scrollX * -1}px ${
+		scrollY * -1
+	}px;`;
+	let zoomStyleString: string = "";
+	$: zoomStyleString = `transform: scale(${zoom}) translate(${zoomTranslatePercent(
+		zoom
+	)}%, ${zoomTranslatePercent(zoom)}%); width: ${100 / zoom}vw; height: ${
+		100 / zoom
+	}vh;`;
 	onMount(() => {
 		supabase
 			.channel("blocks")
@@ -314,14 +393,17 @@
 
 <svelte:window
 	on:paste={pasteHandler}
-	on:wheel={handleWheel}
+	on:wheel|nonpassive={handleWheel}
+	on:mousedown={handleMouseDown}
+	on:mousemove={handleMouseMove}
+	on:mouseup={handleMouseUp}
 	bind:innerHeight
 	bind:innerWidth
 	bind:devicePixelRatio
 />
 {id}
 <div id="block-wrapper">
-	<div id="main-blocks" style={boundsStyleString}>
+	<div id="main-blocks" style={boundsStyleString + zoomStyleString}>
 		{#each $blocks as block (block.id)}
 			<BlockWrapper
 				on:positionChange={handleBlockPositionChanged}
@@ -334,5 +416,6 @@
 		{/each}
 	</div>
 </div>
-
+<!--
 <BlockCreator on:createBlock={createBlock} {scrollX} {scrollY}></BlockCreator>
+-->

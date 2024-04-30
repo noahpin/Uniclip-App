@@ -10,6 +10,8 @@
 	import { backOut, elasticOut } from "svelte/easing";
 	import { spring } from "svelte/motion";
 
+	import { boardZoom } from "$lib/stores"
+
 	let possibleBlockHits: any = {
 		default: {
 			bottom: true,
@@ -154,6 +156,8 @@ left: calc(${
 		rotate.update((n) => n / 1.4 - rotWeight);
 		rafId = requestAnimationFrame(raf);
 	}
+	let zoomModifier = 1;
+	$: zoomModifier = $boardZoom;
 	function moveHandler(e: PointerEvent) {
 		if (moving == "") return;
 		if (userClickedTopBar) {
@@ -168,40 +172,44 @@ left: calc(${
 			useBlockPreview = true;
 			userClickedTopBar = false;
 		}
+		let dX = pX - e.clientX
+		let dY = pY - e.clientY
+		dX /= zoomModifier
+		dY /= zoomModifier
 		if (moving.includes("m")) {
 			rotate.update((n) => n + e.movementX * 0.1);
-			block.position.x = initialPosition.x - (pX - e.clientX) / 60;
-			block.position.y = initialPosition.y - (pY - e.clientY) / 60;
+			block.position.x = initialPosition.x - (dX) / 60;
+			block.position.y = initialPosition.y - (dY) / 60;
 		}
 		if (moving.includes("b")) {
 			block.position.h = Math.max(
-				initialPosition.h + Math.round((e.clientY - pY) / 60),
+				initialPosition.h + Math.round(-(dY) / 60),
 				1
 			);
 		}
 		if (moving.includes("t")) {
 			block.position.h = Math.max(
-				initialPosition.h + Math.round((pY - e.clientY) / 60),
+				initialPosition.h + Math.round((dY) / 60),
 				1
 			);
-			if (initialPosition.h + Math.round((pY - e.clientY) / 60) >= 1) {
+			if (initialPosition.h + Math.round((dY) / 60) >= 1) {
 				block.position.h =
-					initialPosition.h + Math.round((pY - e.clientY) / 60);
+					initialPosition.h + Math.round((dY) / 60);
 				block.position.y =
-					initialPosition.y - Math.round((pY - e.clientY) / 60);
+					initialPosition.y - Math.round((dY) / 60);
 			}
 		}
 		if (moving.includes("l")) {
-			if (initialPosition.w + Math.round((pX - e.clientX) / 60) >= 1) {
+			if (initialPosition.w + Math.round((dX) / 60) >= 1) {
 				block.position.w =
-					initialPosition.w + Math.round((pX - e.clientX) / 60);
+					initialPosition.w + Math.round((dX) / 60);
 				block.position.x =
-					initialPosition.x - Math.round((pX - e.clientX) / 60);
+					initialPosition.x - Math.round((dX) / 60);
 			}
 		}
 		if (moving.includes("r")) {
 			block.position.w = Math.max(
-				initialPosition.w + Math.round((e.clientX - pX) / 60),
+				initialPosition.w + Math.round(-(dX) / 60),
 				1
 			);
 		}
